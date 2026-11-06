@@ -1,0 +1,15 @@
+# main 守卫：检查进入 main 的提交是否来自已批准的 PR
+# 免费计划的私有仓库没有分支保护，这是事后检查，失败时由技术负责人核查
+name: main-guard
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  guard:
+    uses: TIanle-art/ci-workflows/.github/workflows/main-guard.yml@v1

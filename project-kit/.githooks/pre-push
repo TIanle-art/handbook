@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# 推送前检查：禁止直接推送 main，禁止直接更新已存在的 release/* 分支
+set -euo pipefail
+while read -r local_ref local_sha remote_ref remote_sha; do
+  branch="${remote_ref#refs/heads/}"
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "禁止直接推送 main，请创建 PR 合并。" >&2
+    exit 1
+  fi
+  case "$remote_ref" in
+    refs/heads/release/*)
+      # 远程分支已存在时 remote_sha 不全是 0；新建发布分支允许推送
+      if [ -n "${remote_sha//0/}" ]; then
+        echo "禁止直接更新 ${branch}，请向它提 PR。" >&2
+        exit 1
+      fi
+      ;;
+  esac
+done
+exit 0

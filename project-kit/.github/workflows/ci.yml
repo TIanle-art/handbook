@@ -1,0 +1,28 @@
+# 项目 CI：调用 TIanle-art/ci-workflows 中的可复用 workflow
+# 按项目实际情况删掉不需要的 job，并修改 working-directory
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # 所有项目都保留：密钥扫描、公司 Skill 同步检查
+  baseline:
+    uses: TIanle-art/ci-workflows/.github/workflows/baseline.yml@v1
+
+  # FastAPI 项目
+  backend:
+    uses: TIanle-art/ci-workflows/.github/workflows/python-ci.yml@v1
+    with:
+      working-directory: services/api
+
+  # 网页、小程序、桌面或 NestJS 项目，每个子项目一个 job
+  web:
+    uses: TIanle-art/ci-workflows/.github/workflows/node-ci.yml@v1
+    with:
+      working-directory: apps/web
