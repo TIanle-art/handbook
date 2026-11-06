@@ -27,8 +27,11 @@
 ```bash
 git switch -c chore/project-kit
 
-# 1. 复制公共文件；已有同名文件时先对比再决定
-rsync -a --exclude README.md ../handbook/project-kit/ ./
+# 1. 复制公共文件，不覆盖已有的同名文件
+rsync -a --ignore-existing --exclude README.md ../handbook/project-kit/ ./
+#    已有的同名文件没有复制，逐个对比后手工合并，例如 Trellis 生成的文件：
+diff -u AGENTS.md ../handbook/project-kit/AGENTS.md
+diff -u .gitattributes ../handbook/project-kit/.gitattributes
 
 # 2. 启用 Git hook，同步公司 Skill
 git config core.hooksPath .githooks
@@ -46,11 +49,20 @@ git push
 
 然后提 PR。项目的 `make setup` 中要包含 `git config core.hooksPath .githooks` 和 `bash scripts/sync-skills.sh`，这样每个成员克隆后都会自动启用。
 
-没有 `rsync` 的 Windows 环境，可以在 Git Bash 中用 `cp -R ../handbook/project-kit/. ./` 后删除复制过来的 `README.md`。
+没有 `rsync` 的环境（例如 Windows 的 Git Bash），用下面的命令代替第 1 步的复制，同样不复制本 README、不覆盖已有文件：
+
+```bash
+tar -C ../handbook/project-kit --exclude=./README.md -cf - . | tar -xf - --skip-old-files
+```
+
+不要用 `cp -R` 后再删除 `README.md`：它会先覆盖项目自己的 `README.md`，删除后项目说明就丢了。
 
 ## 使用 Trellis 时
 
-先按《公司项目脚手架规范》6.4 节运行 `trellis init`，再复制本目录的文件。Trellis 会为 Codex 生成或修改 `AGENTS.md`：复制前先对比，把公司规则合并进去，不要直接覆盖 Trellis 生成的内容。
+先按《公司项目脚手架规范》6.4 节运行 `trellis init`，再复制本目录的文件。无论选了哪些工具，Trellis 都会生成根目录的 `AGENTS.md` 和 `.gitattributes`，上面的复制命令不会覆盖它们，需要手工合并：
+
+- `AGENTS.md`：保留 `<!-- TRELLIS:START -->` 到 `<!-- TRELLIS:END -->` 之间的内容，把本目录 `AGENTS.md` 的公司规则加在这个块之后。
+- `.gitattributes`：保留 Trellis 的 `merge=union` 规则，追加本目录 `.gitattributes` 的内容。
 
 ## 前提条件
 

@@ -28,13 +28,23 @@ check_health() {
   return 1
 }
 
+restore_version() {
+  if [ -n "$previous" ]; then
+    set_version "$previous"
+  else
+    sed -i '/^API_VERSION=/d' .env
+  fi
+}
+
 ./backup.sh
 set_version "$version"
+# 拉取镜像或迁移失败时恢复 .env，避免之后的 docker compose up 启动未验证的版本
+trap 'restore_version; echo "部署中止：拉取镜像或执行迁移失败，.env 已恢复为 ${previous:-无}。迁移可能已部分执行，请检查数据库。" >&2' ERR
 docker compose pull api
 docker compose run --rm api sh -c "$migrate_cmd"
-docker compose up -d api
+trap - ERR
 
-if check_health; then
+if docker compose up -d api && check_health; then
   echo "部署成功：${version}"
 else
   echo "健康检查失败，回退到 ${previous:-无}" >&2
