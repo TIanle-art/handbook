@@ -66,7 +66,7 @@ tar -C ../handbook/project-kit --exclude=./README.md -cf - . | tar -xf - --skip-
 
 ## 前提条件
 
-- CI workflow 引用了私有仓库 `TIanle-art/ci-workflows`，需要先在该仓库的 Settings → Actions → General → Access 中允许其他仓库访问。
+- CI workflow 引用了公开仓库 `TIanle-art/ci-workflows`，私有项目可以直接调用，不需要额外设置访问权限。
 - `ci-workflows` 要先发布 `v1` 标签。
 
 ## 更新已有项目
