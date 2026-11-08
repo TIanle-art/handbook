@@ -1,5 +1,5 @@
-# 项目 CI：调用 TIanle-art/ci-workflows 中的可复用 workflow
-# 按项目实际情况删掉不需要的 job，并修改 working-directory
+# 项目 CI：调用 TIanle-art/ci-workflows 中的可复用 workflow（v1.1 的写法）
+# 按项目实际情况删掉不需要的 job，并修改 working-directory。参数说明见 ci-workflows 的 README
 name: CI
 
 on:
@@ -15,14 +15,26 @@ jobs:
   baseline:
     uses: TIanle-art/ci-workflows/.github/workflows/baseline.yml@v1
 
-  # FastAPI 项目
+  # FastAPI 项目：Ruff、pyright、Alembic、pytest。
+  # 默认使用 Python 3.14 和 postgres:17 做测试库。
+  # make-targets：测试通过后在仓库根目录运行的 Makefile 目标，openapi-check 检查已提交的 openapi.json 是否最新
   backend:
     uses: TIanle-art/ci-workflows/.github/workflows/python-ci.yml@v1
     with:
       working-directory: services/api
+      make-targets: "openapi-check"
 
-  # 网页、小程序、桌面或 NestJS 项目，每个子项目一个 job
+  # 有 Docker 部署的项目：构建镜像、启动容器（含迁移）、端到端冒烟；失败时输出日志，最后总是清理。
+  # targets 里的目标要在项目 Makefile 里；caddy-check 检查 Caddyfile.example 的语法
+  docker:
+    uses: TIanle-art/ci-workflows/.github/workflows/docker-smoke.yml@v1
+    with:
+      targets: "caddy-check build docker-up smoke"
+
+  # 网页、小程序、桌面或 NestJS 项目，每个子项目一个 job。
+  # lint 运行项目自己的 lint 脚本（公司统一用 Biome）；e2e-script 不为空时安装 Playwright 浏览器并运行端到端测试
   web:
     uses: TIanle-art/ci-workflows/.github/workflows/node-ci.yml@v1
     with:
       working-directory: apps/web
+      e2e-script: "test:e2e"

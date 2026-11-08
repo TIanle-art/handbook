@@ -19,55 +19,75 @@
 | `.github/ISSUE_TEMPLATE/` | 功能和缺陷的 Issue 表单 |
 | `.github/pull_request_template.md` | PR 模板 |
 | `.editorconfig`、`.gitattributes`、`.gitignore` | 编码、换行符和忽略规则 |
+| `.gitleaks.toml` | gitleaks 配置：沿用默认规则，只排除 Trellis 的 `.trellis/.template-hashes.json`（里面是 SHA-256，会被 `generic-api-key` 误判成密钥，导致 CI 的 `baseline` 失败） |
 
 ## 接入步骤
+
+**使用 Trellis 时（公司的项目都用）：先运行 `trellis init`，再复制本目录。** 如果根目录已经有 `AGENTS.md`，`trellis init` 会跳过它，不会写入 Trellis 的内容。`trellis init` 的命令见《公司项目脚手架规范》6.4 节（注意第一条要加 `-y`，zsh 下用数组保存参数）。
 
 在项目根目录运行（假设 handbook 克隆在项目旁边的 `../handbook`）：
 
 ```bash
 git switch -c chore/project-kit
 
-# 1. 复制公共文件，不覆盖已有的同名文件
-rsync -a --ignore-existing --exclude README.md ../handbook/project-kit/ ./
-#    已有的同名文件没有复制，逐个对比后手工合并，例如 Trellis 生成的文件：
-diff -u AGENTS.md ../handbook/project-kit/AGENTS.md
-diff -u .gitattributes ../handbook/project-kit/.gitattributes
+# 0. 先运行 trellis init（命令见规范 6.4 节），它会生成 AGENTS.md 和 .gitattributes
 
-# 2. 启用 Git hook，同步公司 Skill
+# 1. 复制公共文件：不覆盖已有的同名文件，也不复制本 README 和 AGENTS.md
+rsync -a --ignore-existing --exclude README.md --exclude AGENTS.md ../handbook/project-kit/ ./
+```
+
+**2. 把公司规则合并进 Trellis 生成的 `AGENTS.md`**，不要覆盖整个文件：
+
+```bash
+printf '\n' >> AGENTS.md
+cat ../handbook/project-kit/AGENTS.md >> AGENTS.md
+```
+
+Trellis 管理 `<!-- TRELLIS:START -->` 到 `<!-- TRELLIS:END -->` 之间的内容，块外的公司规则会保留。合并之后，填写“项目简介”和“技术栈”。
+
+**3. 合并 `.gitattributes`：** 上面的复制不会覆盖已有的 `.gitattributes`（Trellis 已经生成了带 `merge=union` 规则的版本），把本目录的内容追加进去：
+
+```bash
+printf '\n' >> .gitattributes
+cat ../handbook/project-kit/.gitattributes >> .gitattributes
+```
+
+**4. 启用 Git hook，同步公司 Skill：**
+
+```bash
 git config core.hooksPath .githooks
 bash scripts/sync-skills.sh
+```
 
-# 3. 确认 hook 和脚本有可执行权限
+**5. 确认 hook 和脚本有可执行权限，按项目删减 CI，提交：**
+
+```bash
 git add -A
 git update-index --chmod=+x .githooks/pre-commit .githooks/pre-push scripts/*.sh
 
-# 4. 填写 AGENTS.md，按项目删减 .github/workflows/ci.yml
+# 按项目删减 .github/workflows/ci.yml（FastAPI、Docker、Node 的 job 各取所需），
+# 并确认 Makefile 里有 ci.yml 引用的目标（例如 openapi-check、build、docker-up、smoke）
 git status
 git commit -m "chore: 接入团队公共基线"
 git push
 ```
 
-然后提 PR。项目的 `make setup` 中要包含 `git config core.hooksPath .githooks` 和 `bash scripts/sync-skills.sh`，这样每个成员克隆后都会自动启用。
+然后提交 PR。项目的 `make setup` 中要包含 `git config core.hooksPath .githooks` 和 `bash scripts/sync-skills.sh`，这样每个成员克隆后都会自动启用。
 
-没有 `rsync` 的环境（例如 Windows 的 Git Bash），用下面的命令代替第 1 步的复制，同样不复制本 README、不覆盖已有文件：
+没有 `rsync` 的环境（例如 Windows 的 Git Bash），用下面的命令代替第 1 步的复制，同样不复制本 README 和 `AGENTS.md`、不覆盖已有文件：
 
 ```bash
-tar -C ../handbook/project-kit --exclude=./README.md -cf - . | tar -xf - --skip-old-files
+tar -C ../handbook/project-kit --exclude=./README.md --exclude=./AGENTS.md -cf - . | tar -xf - --skip-old-files
 ```
 
 不要用 `cp -R` 后再删除 `README.md`：它会先覆盖项目自己的 `README.md`，删除后项目说明就丢了。
 
-## 使用 Trellis 时
-
-先按《公司项目脚手架规范》6.4 节运行 `trellis init`，再复制本目录的文件。无论选了哪些工具，Trellis 都会生成根目录的 `AGENTS.md` 和 `.gitattributes`，上面的复制命令不会覆盖它们，需要手工合并：
-
-- `AGENTS.md`：保留 `<!-- TRELLIS:START -->` 到 `<!-- TRELLIS:END -->` 之间的内容，把本目录 `AGENTS.md` 的公司规则加在这个块之后。
-- `.gitattributes`：保留 Trellis 的 `merge=union` 规则，追加本目录 `.gitattributes` 的内容。
+**不使用 Trellis 时**（不推荐）：复制时不用排除 `AGENTS.md`，直接用上面的命令去掉 `--exclude AGENTS.md`，然后填写 `AGENTS.md`。
 
 ## 前提条件
 
 - CI workflow 引用了公开仓库 `TIanle-art/ci-workflows`，私有项目可以直接调用，不需要额外设置访问权限。
-- `ci-workflows` 要先发布 `v1` 标签。
+- `ci-workflows` 要先发布 `v1` 标签，并且 `v1` 要包含 v1.1 的内容（`python-ci` 的 `make-targets`、`docker-smoke.yml`、`node-ci` 的 `e2e-script`、`main-guard` 的豁免标签）。`ci.yml` 里的 `make-targets`、`targets` 引用的是项目 Makefile 里的目标，要确认它们存在。
 
 ## 更新已有项目
 
