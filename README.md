@@ -8,6 +8,7 @@
 |---|---|
 | [`docs/团队协作开发规范.md`](docs/团队协作开发规范.md) | 流程、分工、AI 协作、Git 与 GitHub 操作、审查、发布、故障、交付与合规 |
 | [`docs/公司项目脚手架规范.md`](docs/公司项目脚手架规范.md) | 技术选型、两套后端、三种客户端、工程基线、部署和模板维护 |
+| [`docs/模板建设经验.md`](docs/模板建设经验.md) | 建模板时踩过的坑和验证方法，做新模板前先读 |
 | [`templates/`](templates/) | 项目简报、业务发现、PRD、ADR、发布清单、复盘等文档模板 |
 | [`project-kit/`](project-kit/) | 复制到每个项目根目录的公共文件：`AGENTS.md`、Git hook、公司 Skill、CI 调用、Issue 和 PR 模板 |
 | [`deploy/`](deploy/) | 服务器上使用的部署和备份脚本 |
