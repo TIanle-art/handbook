@@ -1,0 +1,43 @@
+name: 功能或任务
+description: 新功能、改进或技术任务
+labels: ["type:feature"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 目标
+      description: 一句话说明要解决什么问题
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准
+      value: |
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: 非范围
+  - type: dropdown
+    id: size
+    attributes:
+      label: 规模
+      options: ["S", "M", "L"]
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: 风险
+      options: ["L1", "L2", "L3"]
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: 相关资料
+      description: PRD、OpenSpec 变更、ADR、设计稿和相关代码路径

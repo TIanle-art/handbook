@@ -1,0 +1,9 @@
+# gitleaks 配置：沿用默认规则，只排除下面这一个文件。
+title = "项目的 gitleaks 配置"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Trellis 记录模板文件的 SHA-256 哈希，被 generic-api-key 误判；文件里没有密钥"
+paths = ['''^\.trellis/\.template-hashes\.json$''']
