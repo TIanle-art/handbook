@@ -3,7 +3,7 @@
 set -euo pipefail
 
 version="${1:?用法：./deploy.sh <版本号>}"
-# FastAPI 用 "alembic upgrade head"；NestJS 用 "pnpm prisma migrate deploy"
+# FastAPI 用 "alembic upgrade head"；NestJS 用 "npx prisma migrate deploy"，见规范 8.5
 migrate_cmd="${MIGRATE_CMD:-alembic upgrade head}"
 health_url="${HEALTH_URL:-http://127.0.0.1:8000/readyz}"
 
